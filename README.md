@@ -124,25 +124,73 @@ SELECT * FROM mentorship_count_recent_titles;
 
 ```
 
-2) Given the large number of potential retirees, I believe that P-H should expand mentorship eligibility beyond just those employees born in 1965, which can be done by expanding on the code both from the snippet above and Deliverable 2. The goal would be to expand the pool of mentees to more closely match the pool of mentors, which spans four total years. The code for such an expansion would be as follows: 
+2) Given the large number of potential retirees, I believe that P-H should expand mentorship eligibility beyond just those employees born in 1965, which can be done by expanding on the code both from the snippet above and Deliverable Two. The goal would be to expand the pool of mentees to more closely match the pool of mentors, which spans four total years. The code for an expansion to the mentorship program list coming off of Deliverable Two would be as follows: 
 ```SQL
 -- Expanding Mentorship Program eligibility dates. 
 SELECT DISTINCT ON(e.emp_no) 
-		e.emp_no, 
-		e.first_name, 
- 		e.last_name, 
-		e.birth_date,
-		ed.from_date,
-		ed.to_date,
-		jt.title
+	e.emp_no, 
+	e.first_name, 
+ 	e.last_name, 
+	e.birth_date,
+	ed.from_date,
+	ed.to_date,
+	jt.title
 INTO mentorship_list_expanded
 FROM employees AS e
 LEFT OUTER JOIN employee_dept AS ed
 ON (e.emp_no = ed.emp_no)
 LEFT OUTER JOIN job_title AS jt
 ON (e.emp_no = jt.emp_no)
-WHERE (e.birth_date BETWEEN '1965-01-01' AND '1988-12-31')
+WHERE (e.birth_date BETWEEN '1965-01-01' AND '1968-12-31')
 ORDER BY e.emp_no;
 
 SELECT * FROM mentorship_list_expanded;
+```
+
+To expand the list of employees eligible for the mentorship by department, we would need to just modify the dates from the first suggestion in this section, as follows: 
+
+```SQL
+
+-- Mentorship unique by title count code
+-- Join Emp and Title tables to Retirement Titles table
+SELECT em.emp_no,
+       em.first_name,
+       em.last_name,
+       jt.title,
+       jt.from_date,
+       jt.to_date
+INTO mentorship_titles
+FROM employees AS em
+INNER JOIN job_title AS jt
+ON (em.emp_no = jt.emp_no)
+WHERE (em.birth_date BETWEEN '1965-01-01' AND '1968-12-31')
+ORDER BY em.emp_no;
+
+-- Checking on output for new table before export
+SELECT * FROM mentorship_titles;
+
+-- Use Dictinct with Orderby to remove duplicate rows
+SELECT DISTINCT ON (emp_no) 
+	emp_no, 
+	first_name, 
+	last_name,
+	title
+INTO mentorship_unique
+FROM mentorship_titles
+ORDER BY emp_no, to_date DESC;
+
+-- Checking on output for new table before export
+SELECT * FROM mentorship_unique;
+
+-- Retrieve the number of employees by their most recent job title who are about to retire.
+SELECT COUNT(mu.emp_no),
+	mu.title
+INTO mentorship_count_recent_titles
+FROM mentorship_unique as mu
+GROUP BY title
+ORDER BY COUNT(title) DESC;
+
+-- Checking on output for new table before export
+SELECT * FROM mentorship_count_recent_titles;
+
 ```
