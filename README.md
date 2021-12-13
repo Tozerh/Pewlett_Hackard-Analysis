@@ -11,9 +11,10 @@ This project focused on creating and querying data tables related to Pewlett-Hac
 
 ## Results
 
-For Deliverable One, we were tasked with trying to create a table for P-H that contained all of the retirment-eligible employees at the organization. Since our 
+For Deliverable One, we were tasked with trying to create a table for P-H that contained all of the retirment-eligible employees at the organization. The data provided by P-H came in several different data sets, and required that we create an entity relationship diagram (ERD) to map out our plan. 
+-   In our ERD, we can see that the relationship between employees and titles rests on the employee number, our primary key:  
 
-![PyBer Summary](https://github.com/Tozerh/PyBer_Analysis/blob/main/PyBer%20Summary.PNG)
+![EmpTitle](https://github.com/Tozerh/Pewlett_Hackard-Analysis/blob/main/Schema%20EmpTitles.PNG)
 
 The PyBer data summary above provides some key details on the differences between ride share usage in the different city types we explored: urban, suburban, and rural:
 
