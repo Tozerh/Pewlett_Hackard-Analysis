@@ -11,37 +11,138 @@ This project focused on creating and querying data tables related to Pewlett-Hac
 
 ## Results
 
-For Deliverable One, we were tasked with trying to create a table for P-H that contained all of the retirment-eligible employees at the organization. The data provided by P-H came in several different data sets, and required that we create an entity relationship diagram (ERD) to map out our plan. 
--   In our ERD, we can see that the relationship between employees and titles rests on the employee number, our primary key:  
+-   For Deliverable One, we were tasked with trying to create a table for P-H that contained all of the retirment-eligible employees at the organization. The data provided by P-H came in several different data sets, and required that we create an entity relationship diagram (ERD) to map out our plan. 
 
+-   In our ERD, we can see that the relationship between employees and titles rests on the employee number, our primary key:  
 ![EmpTitle](https://github.com/Tozerh/Pewlett_Hackard-Analysis/blob/main/Schema%20EmpTitles.PNG)
 
-The PyBer data summary above provides some key details on the differences between ride share usage in the different city types we explored: urban, suburban, and rural:
+In order to actually create this connection between our datasets. Using postgres and PGAdmin, we were able to create SQL tables and queries that joined these two datatables together: 
+```SQL
+-- Join Emp and Title tables to Retirement Titles table
+SELECT em.emp_no,
+       em.first_name,
+       em.last_name,
+       jt.title,
+       jt.from_date,
+       jt.to_date
+INTO retirement_titles
+FROM employees AS em
+INNER JOIN job_title AS jt
+ON (em.emp_no = jt.emp_no)
+WHERE (em.birth_date BETWEEN '1952-01-01' AND '1955-12-31')
+ORDER BY em.emp_no;
+```
 
-- *Urban riders tend to take more rides than any other city type, but also pay less per ride based on average fare.* 
+-   Once we joined these table together into our new "retirement_titles" table, we still needed to be sure that employees would only be appearing once on our list. Since employees could have occupied multiple positions within P-H during their tenure, we needed to be sure we coded tables and queries with SQL to account for this: 
+```SQL
+-- Remove duplicate rows using DISTINCT ONf and ORDER BY
+SELECT DISTINCT ON (emp_no) 
+	emp_no, 
+	first_name, 
+	last_name,
+	title
+INTO titles_unique
+FROM retirement_titles
+ORDER BY emp_no, to_date DESC;
+```
+- This table, "titles_unique," contains each retirement-age employee once, along with their title, and is used to build a count of the titles that P-H will be losing. In total, there are 90,398 positions that need to be filled when retirement-eligible employees born between January 1, 1952 and December 31, 1955 decide to vacate their positions.  
 
-![Riders by Type](https://github.com/Tozerh/PyBer_Analysis/blob/main/Resources/total_rides_by_type.png)
+-  For Deliverable Two, we were tasked with creating a list of employees who might be eligible for a mentorship program that would help train younger employees and prepare them for the jobs that the retirees would be vacating. The result of this code: 
+```SQL
+SELECT DISTINCT ON(e.emp_no) 
+		e.emp_no, 
+		e.first_name, 
+ 		e.last_name, 
+		e.birth_date,
+		ed.from_date,
+		ed.to_date,
+		jt.title
+INTO mentorship_list
+FROM employees AS e
+LEFT OUTER JOIN employee_dept AS ed
+ON (e.emp_no = ed.emp_no)
+LEFT OUTER JOIN job_title AS jt
+ON (e.emp_no = jt.emp_no)
+WHERE (e.birth_date BETWEEN '1965-01-01' AND '1965-12-31')
+ORDER BY e.emp_no;
+```
+is that 1,940 employees are mentorship eligible. 
 
-Coupled with the pie chart above, the data in the summary data frame point to a couple of options for PyBer: We could increase premiums for urban riders in order to boost revenues and/or we could consider lowering costs for rural riders to increase uptake of PyBer's services, which should result in long-term profitability for this sector of PyBer's business. 
+## Summary
 
-- *Average Fare per Driver is highest in the Rural city type.* According to the summary data frame above, drivers in rural areas may be taking longer trips, resulting in a higher fare for each ride. Given that rural areas are definitionally more spread out than urban or suburban areas, this thesis does track with our data. It is also possible that PyBer is increasing premiums for rural riders in order to incentivize drivers to actually use PyBer as an income source. The more drivers PyBer can deploy in rural settings, the higher rural customer's satisfaction scores should be (E.g., more PyBer drivers in rurual areas will make it easier for rural riders to call a PyBer, PyBers will become less expensive and a better value, etc.). 
+How many roles will need to be filled as the "silver tsunami" begins to make an impact?
+90,398 roles will need to be filled as the "silver tsunami" begins to make an impact. 
 
-- *There are many more drivers in cities than in other settings.* 
+Are there enough qualified, retirement-ready employees in the departments to mentor the next generation of Pewlett Hackard employees?
+Yes, there are more than enough retirement-ready employees to mentor the next generation of P-H employees. 
 
-![Driver by Type](https://github.com/Tozerh/PyBer_Analysis/blob/main/Resources/total_drivers_by_type.png)
+In order to supply more useful data around the "silver tsunami," I would suggest two pieces of code: 
+1) A query statment that outputs the number of mentorship eligible P-H employees by department. This will give P-H a better comparison point when looking at how to deploy mentors across departments. The code would be a modification of the Deliverable 1 code, as follows: 
+```SQL
 
-The data show that there are just under five times more drivers in urban settings than suburban settings and almost thirty-one times more drivers in urban settings than rural. This data suggests that urban drivers are more likely to pick up a few trips here and there, with fewer urban drivers relying on PyBer as a main driver for their income. 
+-- Mentorship unique by title count code
+-- Join Emp and Title tables to Retirement Titles table
+SELECT em.emp_no,
+       em.first_name,
+       em.last_name,
+       jt.title,
+       jt.from_date,
+       jt.to_date
+INTO mentorship_titles
+FROM employees AS em
+INNER JOIN job_title AS jt
+ON (em.emp_no = jt.emp_no)
+WHERE (em.birth_date BETWEEN '1965-01-01' AND '1965-12-31')
+ORDER BY em.emp_no;
 
-- *Urban centers are currently the largest profit center for PyBer.* 
+-- Checking on output for new table before export
+SELECT * FROM mentorship_titles;
 
-![Fare % by Type](https://github.com/Tozerh/PyBer_Analysis/blob/main/Resources/total_fares_by_type.png)
+-- Use Dictinct with Orderby to remove duplicate rows
+SELECT DISTINCT ON (emp_no) 
+	emp_no, 
+	first_name, 
+	last_name,
+	title
+INTO mentorship_unique
+FROM mentorship_titles
+ORDER BY emp_no, to_date DESC;
 
-Urban riders account for 62.7% of all of PyBer's fares in this data set and are foundational to PyBer's success. 
+-- Checking on output for new table before export
+SELECT * FROM mentorship_unique;
 
-## Business Recommendations
+-- Retrieve the number of employees by their most recent job title who are about to retire.
+SELECT COUNT(mu.emp_no),
+	mu.title
+INTO mentorship_count_recent_titles
+FROM mentorship_unique as mu
+GROUP BY title
+ORDER BY COUNT(title) DESC;
 
-1) In suburban and rural areas PyBer should focus on increasing the number of drivers to service its customer base. The average rides-to-driver ratio in rural and suburban areas is 1.44, indicating that there is more demand than supply. PyBer could make inroads into improving its satisfaction scores from customers by incentivizing more people to become PyBer drivers in suburban and rural settings.
+-- Checking on output for new table before export
+SELECT * FROM mentorship_count_recent_titles;
 
-2) Parallel to the first recommendation above, Pyber might also give riders incentives and discounts to encourage more rides in suburban and rural settings to increase revenue in these areas. The demand seems to be there, and discounts and deals might be a nice catalyst to an increased uptake of PyBer's services in these areas. 
+```
 
-3) Given that there are many more riders than drivers in urban areas, there may be some slack that can be picked up in terms of incetivizing more rides. PyBer might consider selling packages of rides that expire each week to ensure that customers continue to use their services. Urban settings are very competitive in terms of transportation options, and PyBer should do everything that it can to ensure repeat customers on their platform. 
+2) Given the large number of potential retirees, I believe that P-H should expand mentorship eligibility beyond just those employees born in 1965, which can be done by expanding on the code both from the snippet above and Deliverable 2. The goal would be to expand the pool of mentees to more closely match the pool of mentors, which spans four total years. The code for such an expansion would be as follows: 
+```SQL
+-- Expanding Mentorship Program eligibility dates. 
+SELECT DISTINCT ON(e.emp_no) 
+		e.emp_no, 
+		e.first_name, 
+ 		e.last_name, 
+		e.birth_date,
+		ed.from_date,
+		ed.to_date,
+		jt.title
+INTO mentorship_list_expanded
+FROM employees AS e
+LEFT OUTER JOIN employee_dept AS ed
+ON (e.emp_no = ed.emp_no)
+LEFT OUTER JOIN job_title AS jt
+ON (e.emp_no = jt.emp_no)
+WHERE (e.birth_date BETWEEN '1965-01-01' AND '1988-12-31')
+ORDER BY e.emp_no;
+
+SELECT * FROM mentorship_list_expanded;
+```
